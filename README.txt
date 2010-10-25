@@ -1,11 +1,12 @@
 ;; Teachpack for accessing Kiva data through its XML API
 ;; (A complete rewrite of a teachpack written by Shriram Krishnamurthi & Kathi Fisler)
 ;; Nadeem Abdul Hamid
+;; v1.1: October 2010: bug fix, doc updates
 ;; v1: November 2009
 
 ;;;; Documentation for users ;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; The teachpack exports 2 functions and one constant:
+;; The teachpack exports 3 functions and one constant:
 ;;
 ;; (get-kiva-page number) produces a list of numbers, symbols, and
 ;;    strings corresponding to the data on the given page number of 
@@ -17,6 +18,18 @@
 ;;    Website entries may be omitted if their XML was formatted
 ;;    differently from our expectations.
 ;;
+;;  (total-kiva-pages) produces the total number of pages of loan 
+;;    information available on the Kiva web site. Please, do not 
+;;    attempt to retrieve more than 5 pages of information at a time
+;;    in your program -- it can put undue load on the campus network 
+;;    and on the Kiva website. (See point #6 on the Kiva API Code 
+;;    of Conduct page: http://build.kiva.org/docs/code_of_conduct ).
+;;
 ;;  sample-kiva-data is a constant of data in the format coming from the
 ;;    website that students can use to test their functions before
 ;;    connecting to the actual website.
+;;
+;; Information about an individual loan is represented as a tuple:
+;;  (list Number Number String Symbol Number Number Number String Symbol String String Number)
+;; interpreted as:
+;;  (id name size status loan_amt funded_amt paid_amt activity sector use country date)
