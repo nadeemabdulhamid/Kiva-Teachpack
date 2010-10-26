@@ -207,45 +207,52 @@
 ;; This bunch of stuff allows mapping a list of rows of Kiva data to a 
 ;; list of client-defined structures.
 
+
 ; this is what each field in a loan-tuple returned by get-kiva-page represents
-(define TUPLE-FIELDS
+(define-for-syntax TUPLE-FIELDS
   '(id name size status loan_amt funded_amt 
        paid_amt activity sector use country date))
 
 ; selector-for : symbol -> (loan-tuple -> any or #f)
 ; given a field name (must be one of TUPLE-FIELDS), produces a function
 ;   that selects the corresponding field value from a tuple of data
-(define (selector-for target-fld)
-  (if (not (member target-fld TUPLE-FIELDS))
+(define (selector-for target-fld tuple-fields)
+  (if (not (member target-fld tuple-fields))   ;; this should never really happen at runtime (macro does check below)
       (error 'kiva-data->structs 
-             "~a is not a valid field name for a row of Kiva data" 
-             target-fld)
+             (format "~a is not a valid field name for a row of Kiva data" target-fld))
       (lambda (tuple)
-        (if (or (not (list? tuple)) (not (= (length tuple) (length TUPLE-FIELDS))))
+        (if (or (not (list? tuple)) (not (= (length tuple) (length tuple-fields))))
             (error 'kiva-data->structs
                    "Expected a row of Kiva data (a list of ~a data values), got ~a"
-                   (length TUPLE-FIELDS) tuple)
+                   (length tuple-fields) tuple)
             (foldl (λ(fld val def)
                      (if (symbol=? fld target-fld) val def))
                    #f
-                   TUPLE-FIELDS
+                   tuple-fields
                    tuple)))))
 
-(define-syntax kiva-data->structs
-  (syntax-rules ()
+(define-syntax (kiva-data->structs stx)
+  (syntax-case stx ()
     [(_ lst cstr (f ...))
-     (cond [(or (not (procedure? (first-order->higher-order cstr)))
-                (not (= (procedure-arity (first-order->higher-order cstr))
-                        (length (quote (f ...))))))
-            (error 'kiva-data->structs
-                   "~a is not a constructor expecting ~a arguments"
-                   (quote cstr) (length (quote (f ...))))]
-           [else
-            (map (λ(row) 
-                   (apply (first-order->higher-order cstr)
-                          (map (λ(fld) ((selector-for fld) row)) (quote (f ...)))))
-                 lst)])
-     ]
+     (let ([bad-field (findf (λ(v) (not (member (syntax-e v) TUPLE-FIELDS))) (syntax->list #'(f ...)))])
+       (if bad-field
+           (raise-syntax-error 'kiva-data->structs
+                               (format "~a is not a valid field name for a row of Kiva data\nValid field names are ~a" 
+                                       (syntax-e bad-field) TUPLE-FIELDS)
+                               bad-field)
+           #`(if (or (not (procedure? (first-order->higher-order cstr)))
+                     (not (= (procedure-arity (first-order->higher-order cstr))
+                             (length (quote (f ...))))))
+                 (raise-syntax-error 'kiva-data->structs
+                                     (format "~a does not seem to be a constructor expecting ~a arguments"
+                                             (quote cstr) (length (quote (f ...))))
+                                     #'cstr
+                                     )
+                 (map (λ(row) 
+                        (apply (first-order->higher-order cstr)
+                               (map (λ(fld) ((selector-for fld '#,TUPLE-FIELDS) row)) (quote (f ...)))))
+                      lst))
+           ))]
     ))
 
 
