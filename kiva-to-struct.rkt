@@ -7,9 +7,16 @@
 (define-struct loan (borrower amount year))
 
 (kiva-data->structs      ;; function from the teachpack
- sample-kiva-data        ;; this is the row of data
+ sample-kiva-data        ;; this is the list of rows of data, could be (get-kiva-page)
  make-loan               ;; your structure's constructor 
  (name loan_amt date)    ;; the fields you want to extract from each kiva data row
                          ;;  in the order that their values should be supplied to
                          ;;  your structure's constructor
  )
+
+(kiva-data/select
+ sample-kiva-data        ;; this is the list of rows of data, could be (get-kiva-page)
+ (name loan_amt date))   ;; the fields you want to extract from each kiva data row
+                         ;;  in the order that their values should be supplied to
+                         ;;  your structure's constructor
+

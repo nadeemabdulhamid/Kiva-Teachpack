@@ -46,11 +46,20 @@
    example:
  
      (kiva-data->structs      
-      sample-kiva-data        ;; this is the row of data, could be (get-kiva-page)
+      sample-kiva-data        ;; this is the list of rows of data, could be (get-kiva-page)
       make-loan               ;; your structure's constructor 
       (name loan_amt date)    ;; the fields you want to extract from each kiva data row
                               ;;  in the order that their values should be supplied
                               ;;  to your structure's constructor
      )
+
+ If you want to trim the data in the rows, but not introduce a structure, use
+   the (kiva-data/select ...) function which works in a similar manner to
+   kiva-data->structs, but doesn't take a structure's constructor parameter and
+   produces a list of rows with only values for the specified fields, for example:
+
+     (kiva-data/select
+      sample-kiva-data
+      (name loan_amt date))
 
 

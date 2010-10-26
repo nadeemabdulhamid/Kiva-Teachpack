@@ -48,12 +48,21 @@
 ;;   example:
 ;; 
 ;;     (kiva-data->structs      
-;;      sample-kiva-data        ;; this is the row of data, could be (get-kiva-page)
+;;      sample-kiva-data        ;; this is the list of rows of data, could be (get-kiva-page)
 ;;      make-loan               ;; your structure's constructor 
 ;;      (name loan_amt date)    ;; the fields you want to extract from each kiva data row
 ;;                              ;;  in the order that their values should be supplied
 ;;                              ;;  to your structure's constructor
 ;;     )
+;;
+;; If you want to trim the data in the rows, but not introduce a structure, use
+;;   the (kiva-data/select ...) function which works in a similar manner to
+;;   kiva-data->structs, but doesn't take a structure's constructor parameter and
+;;   produces a list of rows with only values for the specified fields, for example:
+;;
+;;     (kiva-data/select
+;;      sample-kiva-data
+;;      (name loan_amt date))
 ;;
 
 
@@ -234,31 +243,39 @@
 (define-syntax (kiva-data->structs stx)
   (syntax-case stx ()
     [(_ lst cstr (f ...))
+     #`(if (or (not (procedure? (first-order->higher-order cstr)))
+               (not (= (procedure-arity (first-order->higher-order cstr))
+                       (length (quote (f ...))))))
+           (raise-syntax-error #f 
+                               (format "does not seem to be a constructor expecting ~a arguments"
+                                       (length (quote (f ...))))
+                               #'cstr
+                               )
+           (map (λ(row) 
+                  (apply (first-order->higher-order cstr) row))
+                (kiva-data/select lst (f ...))))
+     ]
+    ))
+
+(define-syntax (kiva-data/select stx)
+  (syntax-case stx ()
+    [(_ lst (f ...))
      (let ([bad-field (findf (λ(v) (not (member (syntax-e v) TUPLE-FIELDS))) (syntax->list #'(f ...)))])
        (if bad-field
-           (raise-syntax-error 'kiva-data->structs
-                               (format "~a is not a valid field name for a row of Kiva data\nValid field names are ~a" 
-                                       (syntax-e bad-field) TUPLE-FIELDS)
+           (raise-syntax-error #f
+                               (format "not a valid field name for a row of Kiva data\nValid field names are ~a" 
+                                       TUPLE-FIELDS)
                                bad-field)
-           #`(if (or (not (procedure? (first-order->higher-order cstr)))
-                     (not (= (procedure-arity (first-order->higher-order cstr))
-                             (length (quote (f ...))))))
-                 (raise-syntax-error 'kiva-data->structs
-                                     (format "~a does not seem to be a constructor expecting ~a arguments"
-                                             (quote cstr) (length (quote (f ...))))
-                                     #'cstr
-                                     )
-                 (map (λ(row) 
-                        (apply (first-order->higher-order cstr)
-                               (map (λ(fld) ((selector-for fld '#,TUPLE-FIELDS) row)) (quote (f ...)))))
-                      lst))
+           #`(map (λ(row) 
+                    (map (λ(fld) ((selector-for fld '#,TUPLE-FIELDS) row)) (quote (f ...))))
+                  lst)
            ))]
     ))
 
 
 ;; ===========================================================================
 ;; Exports
-(provide get-kiva-page total-kiva-pages sample-kiva-data kiva-data->structs)
+(provide get-kiva-page total-kiva-pages sample-kiva-data kiva-data/select kiva-data->structs)
 
 
 ;; ===========================================================================
