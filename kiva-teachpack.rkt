@@ -1,8 +1,10 @@
 #lang racket
+
 ;; Teachpack for accessing Kiva data through its XML API
 ;; (A complete rewrite of a teachpack written by Shriram Krishnamurthi & Kathi Fisler)
 ;; Nadeem Abdul Hamid
-;; v1.1: October 2010: bug fix, doc updates
+;; v1.2: October 2010: bug fix, doc updates, kiva-data->structs
+;;       (thank you, Stephen Bloch & Shriram Krishnamurthi)
 ;; v1: November 2009
 
 ;;;; Documentation for users ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -87,7 +89,7 @@
 ;; extract-paging-info : Xexpr -> Paging
 ;; extract paging information from the response Xexpr
 
-(check-expect (extract-paging-info '(response () "stuff\n" 
+#;(check-expect (extract-paging-info '(response () "stuff\n" 
                                               (paging () (page () "1")
                                                       (total () "142382")
                                                       (page_size () "20")
@@ -107,7 +109,7 @@
 
 ;; extract-loans-list : Xexpr -> [listof Xexpr]
 ;; extract the list of loan Xexprs from the response Xexpr
-(check-expect (extract-loans-list '(response () "stuff\n" 
+#;(check-expect (extract-loans-list '(response () "stuff\n" 
                                              (paging () (page () "1")
                                                      (total () "142382")
                                                      (page_size () "20")
@@ -128,7 +130,7 @@
 ;; extract-loan-info : Xexpr ->
 ;;     (list Number Number String Symbol Number Number Number String Symbol String String Number)
 ;; i.e. '(id name size status loan_amt funded_amt paid_amt activity sector use country date)
-(check-expect (extract-loan-info 
+#;(check-expect (extract-loan-info 
                '(loan
                  ()
                  (id () "124095")
