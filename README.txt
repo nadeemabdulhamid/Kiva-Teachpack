@@ -55,8 +55,9 @@
 
  If you want to trim the data in the rows, but not introduce a structure, use
    the (kiva-data/select ...) function which works in a similar manner to
-   kiva-data->structs, but doesn't take a structure's constructor parameter and
-   produces a list of rows with only values for the specified fields, for example:
+   kiva-data->structs, but doesn't take a constructor parameter and
+   produces a list of rows (lists) with only values for the specified fields, 
+   for example:
 
      (kiva-data/select
       sample-kiva-data
